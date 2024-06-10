@@ -1,5 +1,3 @@
-#Literally just adding this to check my bot
-
 # Motion Capture and Segmentation
 
 import cv2

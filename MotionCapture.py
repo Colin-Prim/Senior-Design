@@ -1,3 +1,4 @@
+# Imports at the top
 import cv2
 import mediapipe as mp
 import tkinter as tk

@@ -98,9 +98,9 @@ def select_file():
         ("Video files", "*.mp4 *.avi *.mov *.mkv"),
         ("All files", "*.*")
     ]
-    filename = filedialog.askopenfilename(title="Select a video file", filetypes=filetypes)
-    if filename:
-        uploaded_file_path = filename
+    user_file = filedialog.askopenuser_file(title="Select a video file", filetypes=filetypes)
+    if user_file:
+        uploaded_file_path = user_file
         show_processing_screen()
 
 def show_processing_screen():
@@ -118,9 +118,9 @@ def show_processing_screen():
     processing_screen.protocol("WM_DELETE_WINDOW", stop_processing_video)
     process_video(uploaded_file_path, processing_label)
 
-def process_video(filename, processing_label):
+def process_video(user_file, processing_label):
     global stop_processing
-    cap = cv2.VideoCapture(filename)
+    cap = cv2.VideoCapture(user_file)
     if not cap.isOpened():
         print("Error reading video file")
         return

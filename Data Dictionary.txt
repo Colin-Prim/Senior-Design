@@ -18,7 +18,7 @@ humanoids - objects that are shaped like a human. Feature points are then found 
 (collaborators: feature_points, skeletons)
 
 
-feature_points - points placed on the body to outline the shape and the pose it is in. They are typically joints. 
+feature_points - points on the body that are used to outline the shape and the pose it is in. They are typically joints. 
 (collaborators: none)
 
 

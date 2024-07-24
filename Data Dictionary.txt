@@ -1,0 +1,46 @@
+﻿estimator - Finds object boundaries and humanoid shapes to perform pose estimation and create the .bvh output file
+(collaborators: object_boundaries, humanoids, feature_points, skeletons, output_file)
+
+
+object_boundaries - uses RGB analysis to find object boundaries and outlines the object in the given picture or frame
+(collaborators: RGB_analysis, objects)
+
+
+RGB_analysis - analyzes the colors in a picture or frame to see where new colors begin to determine the object boundaries
+(collaborators: frames)
+
+
+objects - items that the system identifies by finding boundaries using RGB analysis. From there, it is determined where the object is a humanoid shape
+(collaborators: humanoids)
+
+
+humanoids - objects that are shaped like a human. Feature points are then found to construct pose estimation
+(collaborators: feature_points, skeletons)
+
+
+feature_points - points placed on the body to outline the shape and the pose it is in. They are typically joints. 
+(collaborators: none)
+
+
+skeleton - the feature points are connected to create the skeleton, which will be the basis of the pose. The estimated pose is added to the output file 
+(collaborators: output_file)
+
+
+output_file - A .bvh file which contains the pose estimation. All estimations from the video will be combined into one .bvh file that the user can download. 
+(collaborators: skeleton)
+
+
+web_app - the program that the user interacts with, which allows the user to upload a video file, checks that the file is valid and usable, starts estimation and displays the current frame it is on, allows the user to cancel, restart, retry, or download the output file
+(collaborators: user, input_file, estimator, frame, skeleton, output_file)
+
+
+user - the human that is using the system. They can upload a file, cancel estimation, restart or retry estimation, and download the output file
+(collaborators: input_file, web_app)
+
+
+input_file - the .mp4 or .avi file that is uploaded by the user. It is then broken into frames to be analyzed
+(collaborators: frames)
+
+
+frames - the individual frames of the input video that it is broken up into
+(collaborators: input_file)

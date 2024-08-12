@@ -16,107 +16,81 @@ output_file_path = 'output.bvh'
 # Define the BVH header
 bvh_header = """HIERARCHY
 ROOT Hips
-{
+{{
     OFFSET 0.000000 0.000000 0.000000
     CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation
     JOINT Spine
-    {
+    {{
         OFFSET 0.000000 10.000000 0.000000
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT Spine1
-        {
+        {{
             OFFSET 0.000000 10.000000 0.000000
             CHANNELS 3 Zrotation Xrotation Yrotation
             JOINT Spine2
-            {
+            {{
                 OFFSET 0.000000 10.000000 0.000000
                 CHANNELS 3 Zrotation Xrotation Yrotation
                 JOINT Neck
-                {
+                {{
                     OFFSET 0.000000 10.000000 0.000000
                     CHANNELS 3 Zrotation Xrotation Yrotation
                     JOINT Head
-                    {
+                    {{
                         OFFSET 0.000000 10.000000 0.000000
                         CHANNELS 3 Zrotation Xrotation Yrotation
                         End Site
-                        {
+                        {{
                             OFFSET 0.000000 5.000000 0.000000
-                        }
-                    }
-                }
-            }
-        }
-    }
+                        }}
+                    }}
+                }}
+            }}
+        }}
+    }}
     JOINT LeftUpLeg
-    {
+    {{
         OFFSET 5.000000 0.000000 0.000000
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT LeftLeg
-        {
+        {{
             OFFSET 0.000000 -10.000000 0.000000
             CHANNELS 3 Zrotation Xrotation Yrotation
             JOINT LeftFoot
-            {
+            {{
                 OFFSET 0.000000 -10.000000 0.000000
                 CHANNELS 3 Zrotation Xrotation Yrotation
                 End Site
-                {
+                {{
                     OFFSET 0.000000 -5.000000 0.000000
-                }
-            }
-        }
-    }
+                }}
+            }}
+        }}
+    }}
     JOINT RightUpLeg
-    {
+    {{
         OFFSET -5.000000 0.000000 0.000000
         CHANNELS 3 Zrotation Xrotation Yrotation
         JOINT RightLeg
-        {
+        {{
             OFFSET 0.000000 -10.000000 0.000000
             CHANNELS 3 Zrotation Xrotation Yrotation
             JOINT RightFoot
-            {
+            {{
                 OFFSET 0.000000 -10.000000 0.000000
                 CHANNELS 3 Zrotation Xrotation Yrotation
                 End Site
-                {
+                {{
                     OFFSET 0.000000 -5.000000 0.000000
-                }
-            }
-        }
-    }
-}
+                }}
+            }}
+        }}
+    }}
+}}
 MOTION
 Frames: {frame_count}
 Frame Time: {frame_time}
 """
-
-def select_file():
-    global uploaded_file_path
-    filetypes = [
-        ("Video files", "*.mp4 *.avi *.mov *.mkv"),
-        ("All files", "*.*")
-    ]
-    user_file = filedialog.askopenuser_file(title="Select a video file", filetypes=filetypes)
-    if user_file:
-        uploaded_file_path = user_file
-        show_processing_screen()
-
-def show_processing_screen():
-    global processing_screen
-    processing_screen = Toplevel(root)
-    processing_screen.title("Processing Video")
-    processing_screen.geometry("800x450")
-    
-    processing_label = Label(processing_screen, text="Displaying frame x of xx", font=("Arial", 10))
-    processing_label.pack(side="bottom", anchor="se")
-    
-    cancel_button = Button(processing_screen, text="Cancel", command=stop_processing_video, bg="red", fg="white")
-    cancel_button.pack(side="bottom", anchor="sw")
-
-    processing_screen.protocol("WM_DELETE_WINDOW", stop_processing_video)
-    process_video(uploaded_file_path, processing_label)
 
 def process_video(user_file, processing_label):
     global stop_processing
@@ -134,8 +108,13 @@ def process_video(user_file, processing_label):
     mpPose = mp.solutions.pose
     pose = mpPose.Pose()
 
+    print(f"Frame count: {frame_count}, Frame time: {frame_time}")
+
     with open(output_file_path, 'w') as bvh_file:
-        bvh_file.write(bvh_header.format(frame_count=frame_count, frame_time=frame_time))
+        bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
+        print(bvh_header_formatted)  # Debug: print the formatted header
+        bvh_file.write(bvh_header_formatted)
+        
         while cap.isOpened() and not stop_processing:
             ret, frame = cap.read()
             if not ret:
@@ -158,6 +137,32 @@ def process_video(user_file, processing_label):
 
     cap.release()
     show_final_screen()
+
+def select_file():
+    global uploaded_file_path
+    filetypes = [
+        ("Video files", "*.mp4 *.avi *.mov *.mkv"),
+        ("All files", "*.*")
+    ]
+    user_file = filedialog.askopenfile(title="Select a video file", filetypes=filetypes)
+    if user_file:
+        uploaded_file_path = user_file.name  # Access the file name attribute
+        show_processing_screen()
+
+def show_processing_screen():
+    global processing_screen
+    processing_screen = Toplevel(root)
+    processing_screen.title("Processing Video")
+    processing_screen.geometry("800x450")
+    
+    processing_label = Label(processing_screen, text="Displaying frame x of xx", font=("Arial", 10))
+    processing_label.pack(side="bottom", anchor="se")
+    
+    cancel_button = Button(processing_screen, text="Cancel", command=stop_processing_video, bg="red", fg="white")
+    cancel_button.pack(side="bottom", anchor="sw")
+
+    processing_screen.protocol("WM_DELETE_WINDOW", stop_processing_video)
+    process_video(uploaded_file_path, processing_label)
 
 def extract_pose_data(pose_landmarks):
     # Define a mapping from MediaPipe landmarks to BVH hierarchy joints

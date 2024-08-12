@@ -92,6 +92,7 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
+
 def select_file():
     global uploaded_file_path
     filetypes = [
@@ -103,20 +104,22 @@ def select_file():
         uploaded_file_path = user_file
         show_processing_screen()
 
+
 def show_processing_screen():
     global processing_screen
     processing_screen = Toplevel(root)
     processing_screen.title("Processing Video")
     processing_screen.geometry("800x450")
-    
+
     processing_label = Label(processing_screen, text="Displaying frame x of xx", font=("Arial", 10))
     processing_label.pack(side="bottom", anchor="se")
-    
+
     cancel_button = Button(processing_screen, text="Cancel", command=stop_processing_video, bg="red", fg="white")
     cancel_button.pack(side="bottom", anchor="sw")
 
     processing_screen.protocol("WM_DELETE_WINDOW", stop_processing_video)
     process_video(uploaded_file_path, processing_label)
+
 
 def process_video(user_file, processing_label):
     global stop_processing
@@ -158,6 +161,7 @@ def process_video(user_file, processing_label):
 
     cap.release()
     show_final_screen()
+
 
 def extract_pose_data(pose_landmarks):
     # Define a mapping from MediaPipe landmarks to BVH hierarchy joints
@@ -233,16 +237,18 @@ def extract_pose_data(pose_landmarks):
 
     return " ".join(pose_data) + "\n"
 
+
 def stop_processing_video():
     global stop_processing
     stop_processing = True
+
 
 def show_final_screen():
     processing_screen.destroy()
     final_screen = Toplevel(root)
     final_screen.title("Video Processing Complete")
     final_screen.geometry("800x450")
-    
+
     play_again_button = Button(final_screen, text="Play Again", command=lambda: play_video(output_file_path))
     play_again_button.pack(side="top", pady=10)
 
@@ -255,11 +261,14 @@ def show_final_screen():
     back_to_home_button = Button(final_screen, text="Back to Home", command=final_screen.destroy)
     back_to_home_button.pack(side="right", padx=10)
 
+
 def play_video(filepath):
     messagebox.showinfo("Play Again", "BVH file playback is not supported in this application.")
 
+
 def download_file():
     messagebox.showinfo("Download", "Download functionality to be implemented.")
+
 
 def restart_program():
     global stop_processing, uploaded_file_path
@@ -269,6 +278,7 @@ def restart_program():
         os.remove(output_file_path)
     root.destroy()
     main()
+
 
 def main():
     global root
@@ -282,6 +292,7 @@ def main():
 
     # Run the Tkinter event loop
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

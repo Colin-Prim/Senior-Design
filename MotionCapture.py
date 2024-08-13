@@ -92,52 +92,6 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
-def process_video(user_file, processing_label):
-    global stop_processing
-    cap = cv2.VideoCapture(user_file)
-    if not cap.isOpened():
-        print("Error reading video file")
-        return
-
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_time = 1 / fps
-    current_frame = 0
-
-    mpDraw = mp.solutions.drawing_utils
-    mpPose = mp.solutions.pose
-    pose = mpPose.Pose()
-
-    print(f"Frame count: {frame_count}, Frame time: {frame_time}")
-
-    with open(output_file_path, 'w') as bvh_file:
-        bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
-        print(bvh_header_formatted)  # Debug: print the formatted header
-        bvh_file.write(bvh_header_formatted)
-        
-        while cap.isOpened() and not stop_processing:
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            current_frame += 1
-            imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB for mediapipe
-
-            result2 = pose.process(imgRGB)
-
-            if result2.pose_landmarks:
-                # Extract and write pose data to BVH file
-                frame_data = extract_pose_data(result2.pose_landmarks)
-                bvh_file.write(frame_data)
-
-            processing_label.config(text=f"Displaying frame {current_frame} of {frame_count}")
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-    cap.release()
-    show_final_screen()
-
 def select_file():
     global uploaded_file_path
     filetypes = [
@@ -234,9 +188,56 @@ def extract_pose_data(pose_landmarks):
             parent_index = landmarks[parent_joint]
             euler = calculate_rotation(parent_index, index)
             rotation_x, rotation_y, rotation_z = euler
-        pose_data.append(f"{x} {y} {z} {rotation_x} {rotation_y} {rotation_z}")
+        pose_data.append(f"{x:.6f} {y:.6f} {z:.6f} {rotation_x:.6f} {rotation_y:.6f} {rotation_z:.6f}")
 
     return " ".join(pose_data) + "\n"
+
+def process_video(user_file, processing_label):
+    global stop_processing
+    cap = cv2.VideoCapture(user_file)
+    if not cap.isOpened():
+        print("Error reading video file")
+        return
+
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    frame_time = 1 / fps
+    current_frame = 0
+
+    mpDraw = mp.solutions.drawing_utils
+    mpPose = mp.solutions.pose
+    pose = mpPose.Pose()
+
+    print(f"Frame count: {frame_count}, Frame time: {frame_time}")  # Debug: Print frame count and frame time
+
+    with open(output_file_path, 'w') as bvh_file:
+        bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
+        print(f"Formatted BVH header:\n{bvh_header_formatted}")  # Debug: Print formatted BVH header
+        bvh_file.write(bvh_header_formatted)
+        
+        while cap.isOpened() and not stop_processing:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            current_frame += 1
+            imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB for mediapipe
+
+            result2 = pose.process(imgRGB)
+
+            if result2.pose_landmarks:
+                # Extract and write pose data to BVH file
+                frame_data = extract_pose_data(result2.pose_landmarks)
+                bvh_file.write(frame_data)
+                print(f"Frame {current_frame} data: {frame_data.strip()}")  # Debug: Print frame data
+
+            processing_label.config(text=f"Displaying frame {current_frame} of {frame_count}")
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    cap.release()
+    show_final_screen()
 
 def stop_processing_video():
     global stop_processing

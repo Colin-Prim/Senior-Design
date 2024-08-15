@@ -1,17 +1,8 @@
 import cv2
 import mediapipe as mp
-import tkinter as tk
-from tkinter import filedialog, Toplevel, Label, Button, messagebox
-import os
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-
-# Global variable to control stopping
-stop_processing = False
-
-# Paths for the uploaded and output files
-uploaded_file_path = ''
-output_file_path = 'output.bvh'
+from tkinter import Tk, filedialog
 
 # Define the BVH header
 bvh_header = """HIERARCHY
@@ -92,34 +83,7 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
-def select_file():
-    global uploaded_file_path
-    filetypes = [
-        ("Video files", "*.mp4 *.avi *.mov *.mkv"),
-        ("All files", "*.*")
-    ]
-    user_file = filedialog.askopenfile(title="Select a video file", filetypes=filetypes)
-    if user_file:
-        uploaded_file_path = user_file.name  # Access the file name attribute
-        show_processing_screen()
-
-def show_processing_screen():
-    global processing_screen
-    processing_screen = Toplevel(root)
-    processing_screen.title("Processing Video")
-    processing_screen.geometry("800x450")
-    
-    processing_label = Label(processing_screen, text="Displaying frame x of xx", font=("Arial", 10))
-    processing_label.pack(side="bottom", anchor="se")
-    
-    cancel_button = Button(processing_screen, text="Cancel", command=stop_processing_video, bg="red", fg="white")
-    cancel_button.pack(side="bottom", anchor="sw")
-
-    processing_screen.protocol("WM_DELETE_WINDOW", stop_processing_video)
-    process_video(uploaded_file_path, processing_label)
-
 def extract_pose_data(pose_landmarks):
-    # Define a mapping from MediaPipe landmarks to BVH hierarchy joints
     landmarks = {
         'Hips': 0,
         'LeftUpLeg': 23,
@@ -131,15 +95,13 @@ def extract_pose_data(pose_landmarks):
         'Spine': 11,
         'Spine1': 12,
         'Spine2': 13,
-        'Neck': 0,  # No direct match in MediaPipe, needs adjustment
-        'Head': 0  # No direct match in MediaPipe, needs adjustment
+        'Neck': 0,
+        'Head': 0
     }
 
-    # Adjust the mapping for the neck and head
-    landmarks['Neck'] = 0  # Use the nose landmark for neck approximation
-    landmarks['Head'] = 0  # Use the nose landmark for head approximation
+    landmarks['Neck'] = 0
+    landmarks['Head'] = 0
 
-    # Define parent-child relationships for BVH hierarchy
     parent_child_pairs = {
         'Hips': None,
         'Spine': 'Hips',
@@ -156,7 +118,6 @@ def extract_pose_data(pose_landmarks):
     }
 
     def vector_to_quaternion(v1, v2):
-        # Calculate quaternion that rotates vector v1 to vector v2
         cross_product = np.cross(v1, v2)
         dot_product = np.dot(v1, v2)
         w = np.sqrt((np.linalg.norm(v1) ** 2) * (np.linalg.norm(v2) ** 2)) + dot_product
@@ -192,8 +153,7 @@ def extract_pose_data(pose_landmarks):
 
     return " ".join(pose_data) + "\n"
 
-def process_video(user_file, processing_label):
-    global stop_processing
+def process_video(user_file, output_file_path):
     cap = cv2.VideoCapture(user_file)
     if not cap.isOpened():
         print("Error reading video file")
@@ -208,86 +168,52 @@ def process_video(user_file, processing_label):
     mpPose = mp.solutions.pose
     pose = mpPose.Pose()
 
-    print(f"Frame count: {frame_count}, Frame time: {frame_time}")  # Debug: Print frame count and frame time
+    print(f"Frame count: {frame_count}, Frame time: {frame_time}")
 
     with open(output_file_path, 'w') as bvh_file:
         bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
-        print(f"Formatted BVH header:\n{bvh_header_formatted}")  # Debug: Print formatted BVH header
+        print(f"Formatted BVH header:\n{bvh_header_formatted}")
         bvh_file.write(bvh_header_formatted)
         
-        while cap.isOpened() and not stop_processing:
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
             current_frame += 1
-            imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB for mediapipe
+            imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             result2 = pose.process(imgRGB)
 
             if result2.pose_landmarks:
-                # Extract and write pose data to BVH file
                 frame_data = extract_pose_data(result2.pose_landmarks)
                 bvh_file.write(frame_data)
-                print(f"Frame {current_frame} data: {frame_data.strip()}")  # Debug: Print frame data
+                print(f"Frame {current_frame} data: {frame_data.strip()}")
 
-            processing_label.config(text=f"Displaying frame {current_frame} of {frame_count}")
+                # Draw the pose annotation on the frame
+                mpDraw.draw_landmarks(frame, result2.pose_landmarks, mpPose.POSE_CONNECTIONS)
+
+            # Display the frame
+            cv2.imshow('Pose Estimation', frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     cap.release()
-    show_final_screen()
+    cv2.destroyAllWindows()
 
-def stop_processing_video():
-    global stop_processing
-    stop_processing = True
-
-def show_final_screen():
-    processing_screen.destroy()
-    final_screen = Toplevel(root)
-    final_screen.title("Video Processing Complete")
-    final_screen.geometry("800x450")
-    
-    play_again_button = Button(final_screen, text="Play Again", command=lambda: play_video(output_file_path))
-    play_again_button.pack(side="top", pady=10)
-
-    download_button = Button(final_screen, text="Download", command=download_file)
-    download_button.pack(side="left", padx=10)
-
-    try_again_button = Button(final_screen, text="Try Again", command=restart_program)
-    try_again_button.pack(side="left", padx=10)
-
-    back_to_home_button = Button(final_screen, text="Back to Home", command=final_screen.destroy)
-    back_to_home_button.pack(side="right", padx=10)
-
-def play_video(filepath):
-    messagebox.showinfo("Play Again", "BVH file playback is not supported in this application.")
-
-def download_file():
-    messagebox.showinfo("Download", "Download functionality to be implemented.")
-
-def restart_program():
-    global stop_processing, uploaded_file_path
-    stop_processing = False
-    uploaded_file_path = ''
-    if os.path.exists(output_file_path):
-        os.remove(output_file_path)
+def choose_file():
+    root = Tk()
+    root.withdraw()
+    file_path = filedialog.askopenfilename(title="Select a video file", filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv"), ("All files", "*.*")])
     root.destroy()
-    main()
+    return file_path
 
 def main():
-    global root
-    root = tk.Tk()
-    root.title("Video File Selector")
-    root.geometry("300x150")
-
-    # Add a button to select the file
-    select_button = Button(root, text="Select Video File", command=select_file)
-    select_button.pack(expand=True)
-
-    # Run the Tkinter event loop
-    root.mainloop()
+    file_path = choose_file()
+    if file_path:
+        output_file_path = "output.bvh"
+        process_video(file_path, output_file_path)
 
 if __name__ == "__main__":
     main()

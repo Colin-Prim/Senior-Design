@@ -179,9 +179,6 @@ def process_video(user_file, output_file_path):
                 # Draw the pose annotation on the frame
                 mpDraw.draw_landmarks(frame, result2.pose_landmarks, mpPose.POSE_CONNECTIONS)
 
-            # Display the frame
-            cv2.imshow('Pose Estimation', frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

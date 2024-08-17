@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-from tkinter import Tk, filedialog
+
 
 # Define the BVH header
 bvh_header = """HIERARCHY
@@ -83,24 +83,10 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
-def extract_pose_data(pose_landmarks):
-    landmarks = {
-        'Hips': 0,
-        'LeftUpLeg': 23,
-        'LeftLeg': 25,
-        'LeftFoot': 27,
-        'RightUpLeg': 24,
-        'RightLeg': 26,
-        'RightFoot': 28,
-        'Spine': 11,
-        'Spine1': 12,
-        'Spine2': 13,
-        'Neck': 0,
-        'Head': 0
-    }
 
-    landmarks['Neck'] = 0
-    landmarks['Head'] = 0
+def extract_pose_data(pose_landmarks):
+    landmarks = {'Hips': 0, 'LeftUpLeg': 23, 'LeftLeg': 25, 'LeftFoot': 27, 'RightUpLeg': 24, 'RightLeg': 26,
+                 'RightFoot': 28, 'Spine': 11, 'Spine1': 12, 'Spine2': 13, 'Neck': 0, 'Head': 0}
 
     parent_child_pairs = {
         'Hips': None,
@@ -153,6 +139,7 @@ def extract_pose_data(pose_landmarks):
 
     return " ".join(pose_data) + "\n"
 
+
 def process_video(user_file, output_file_path):
     cap = cv2.VideoCapture(user_file)
     if not cap.isOpened():
@@ -174,7 +161,7 @@ def process_video(user_file, output_file_path):
         bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
         print(f"Formatted BVH header:\n{bvh_header_formatted}")
         bvh_file.write(bvh_header_formatted)
-        
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -193,27 +180,32 @@ def process_video(user_file, output_file_path):
                 # Draw the pose annotation on the frame
                 mpDraw.draw_landmarks(frame, result2.pose_landmarks, mpPose.POSE_CONNECTIONS)
 
-            # Display the frame
-            cv2.imshow('Pose Estimation', frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     cap.release()
     cv2.destroyAllWindows()
 
-def choose_file():
-    root = Tk()
-    root.withdraw()
-    file_path = filedialog.askopenfilename(title="Select a video file", filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv"), ("All files", "*.*")])
-    root.destroy()
-    return file_path
-
-def main():
-    file_path = choose_file()
-    if file_path:
-        output_file_path = "output.bvh"
-        process_video(file_path, output_file_path)
 
 if __name__ == "__main__":
+    from tkinter import Tk, filedialog
+
+
+    def choose_file():
+        root = Tk()
+        root.withdraw()
+        file_path = filedialog.askopenfilename(title="Select a video file",
+                                               filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv"),
+                                                          ("All files", "*.*")])
+        root.destroy()
+        return file_path
+
+
+    def main():
+        file_path = choose_file()
+        if file_path:
+            output_file_path = "output.bvh"
+            process_video(file_path, output_file_path)
+
+
     main()

@@ -3,6 +3,7 @@ import mediapipe as mp
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+
 # Define the BVH header
 bvh_header = """HIERARCHY
 ROOT Hips

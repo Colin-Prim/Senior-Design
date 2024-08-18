@@ -1,3 +1,4 @@
+import atexit
 from flask import *
 from werkzeug.utils import secure_filename
 import os
@@ -9,6 +10,20 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def clean_up():
+    """Delete all files in the directory"""
+    for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f'Error deleting file {file_path}: e')
+
+
+atexit.register(clean_up())
 
 
 @app.route("/", methods=['GET', 'POST'])

@@ -23,7 +23,7 @@ def clean_up():
             print(f'Error deleting file {file_path}: e')
 
 
-atexit.register(clean_up())
+atexit.register(clean_up)
 
 
 @app.route("/", methods=['GET', 'POST'])

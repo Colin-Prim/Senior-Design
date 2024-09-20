@@ -45,7 +45,8 @@ def main():
             #  pose estimation
             process_video(input_filepath, output_filepath)
 
-            return redirect(url_for('download_page', filename=os.path.basename(output_filepath)))
+            return redirect(url_for('download_page', video_filename=os.path.basename(input_filepath),
+                                    output_filename=os.path.basename(output_filepath)))
     return '''<html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -54,14 +55,27 @@ def main():
 <body>
    <form method = "post" enctype="multipart/form-data">
         <input type="file" accept=".mp4,.avi,.mov,.mkv" name="file">
-        <input type = "submit" value="Upload">
+        <input type = "submit" value="Estimate">
     </form>
 </body>
 </html>'''
 
 
-@app.route('/download/<filename>', methods=['GET'])
-def download_page(filename):
+@app.route("/restart/<video_filename>", methods=['GET', 'POST'])
+def restart_estimation(video_filename):
+    # Re-run the pose estimation with the same input file
+    input_filepath = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
+    output_filename = f"{os.path.splitext(video_filename)[0]}_estimated_pose.bvh"
+    output_filepath = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+
+    # Pose estimation
+    process_video(input_filepath, output_filepath)
+
+    return redirect(url_for('download_page', video_filename=video_filename, output_filename=output_filename))
+
+
+@app.route('/download/<video_filename>/<output_filename>', methods=['GET'])
+def download_page(video_filename, output_filename):
     return render_template_string('''<html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -74,8 +88,11 @@ def download_page(filename):
     <form action="{{ url_for('download_file', filename=filename) }}" method="get">
         <button type="submit">Download File</button>
     </form>
+    <form action="{{ url_for('restart_estimation', video_filename=video_filename) }}" method="post">
+        <button type="submit">Restart Estimation</button>
+    </form>
 </body>
-</html>''', filename=filename)
+</html>''', filename=output_filename, video_filename=video_filename)
 
 
 @app.route('/download_file/<filename>', methods=['GET'])

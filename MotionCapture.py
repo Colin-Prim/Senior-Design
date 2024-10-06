@@ -2,6 +2,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import os
+import base64
 
 
 # Define the BVH header
@@ -83,7 +85,6 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
-
 def extract_pose_data(pose_landmarks):
     landmarks = {'Hips': 0, 'LeftUpLeg': 23, 'LeftLeg': 25, 'LeftFoot': 27, 'RightUpLeg': 24, 'RightLeg': 26,
                  'RightFoot': 28, 'Spine': 11, 'Spine1': 12, 'Spine2': 13, 'Neck': 0, 'Head': 0}
@@ -140,7 +141,7 @@ def extract_pose_data(pose_landmarks):
     return " ".join(pose_data) + "\n"
 
 
-def process_video(user_file, output_file_path):
+def process_video(user_file, output_file_path, cancel_signal=False):
     cap = cv2.VideoCapture(user_file)
     if not cap.isOpened():
         print("Error reading video file")
@@ -179,6 +180,13 @@ def process_video(user_file, output_file_path):
 
                 # Draw the pose annotation on the frame
                 mpDraw.draw_landmarks(frame, result2.pose_landmarks, mpPose.POSE_CONNECTIONS)
+
+                # Convert frame to JPEG format
+                ret, buffer = cv2.imencode('.jpg', frame)
+                frame_encoded = base64.b64encode(buffer).decode('utf-8')
+
+                # Yield the frame as base64
+                yield f"data:image/jpeg;base64,{frame_encoded}\n\n"
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

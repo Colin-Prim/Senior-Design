@@ -1,6 +1,6 @@
 class BVHSkeleton:
     def __init__(self):
-        self.skeleton = self.get_default_skeleton()
+        self.joint_hierarchy = self.get_default_skeleton()
 
     def get_default_skeleton(self):
         return {
@@ -103,5 +103,3 @@ class BVHSkeleton:
             }
         }
 
-    def get_joint_hierarchy(self):
-        return self.skeleton

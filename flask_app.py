@@ -1,7 +1,7 @@
 from flask import *
 from werkzeug.utils import secure_filename
 import os
-from MotionCapture import process_video
+from pose_estimation import process_video
 
 app = Flask(__name__)
 

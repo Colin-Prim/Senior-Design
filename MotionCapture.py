@@ -24,6 +24,7 @@ def main():
 
     # List to store 3D keypoints for each frame
     keypoints_3d_list = []
+    initial_root_position = None  # To store the initial X, Y, Z positions of the root joint
 
     for frame_idx, frame in enumerate(video_reader):
         # 2D pose estimation
@@ -52,11 +53,17 @@ def main():
             # Adjust the scaling of 3D keypoints for visualization
             keypoints_3d[:, :3] *= 10.0
 
+            # For the first frame, set the initial root position
+            if initial_root_position is None:
+                initial_root_position = keypoints_3d[0, :3].copy()
+                print(f"Initial Root Position: {initial_root_position}")
+
             # Construct motion data for BVH
             frame_motion = []
-            
-            # Root joint (Hips) position and rotation
-            frame_motion.extend(keypoints_3d[0, :3].tolist())  # Xposition, Yposition, Zposition
+
+            # Adjust the root joint's initial position to center it at the origin
+            root_x, root_y, root_z = keypoints_3d[0, :3] - initial_root_position
+            frame_motion.extend([root_x, root_y, root_z])  # Xposition, Yposition, Zposition
             frame_motion.extend([0.0, 0.0, 0.0])  # Initial rotation for the root joint
 
             # Add rotation data for each joint

@@ -186,9 +186,9 @@ def process_video(user_file, output_file_path, cancel_signal=False):
                 frame_encoded = base64.b64encode(buffer).decode('utf-8')
 
                 # Yield the frame as base64
-                yield f"data:image/jpeg;base64,{frame_encoded}\n\n"
+                yield frame_encoded
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cancel_signal is True:
                 break
 
     cap.release()

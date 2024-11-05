@@ -75,36 +75,7 @@ def processing(video_filename, output_filename):
     global cancel_processing
     cancel_processing = False
 
-    return render_template_string(''' 
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Processing Video</title>
-        <script type="text/javascript">
-            var eventSource = new EventSource("{{ url_for('stream', video_filename=video_filename) }}");
-            eventSource.onmessage = function(event) {
-                if (event.data === 'DONE') {
-                    eventSource.close();
-                    // Redirect to download page when processing is done
-                    window.location.href = "{{ url_for('view_frames', video_filename=video_filename, output_filename=output_filename) }}";                
-                } 
-                else {
-                    // Set the source of the image to the URL provided by the server
-                    document.getElementById('video_frame').src = event.data;
-                }
-            };
-        </script>
-    </head>
-    <body>
-        <h1>Processing your video...</h1>
-        <img id="video_frame" src="" alt="Video frame will appear here">
-        <br><br>
-        <form action="{{ url_for('cancel_processing_route', video_filename=video_filename) }}" method="post">
-            <button type="submit">Cancel</button>
-        </form>
-    </body>
-    </html>
-    ''', video_filename=video_filename, output_filename=output_filename)
+    return render_template('processing.html', video_filename=video_filename, output_filename=output_filename)
 
 
 # Route to handle the cancellation of processing

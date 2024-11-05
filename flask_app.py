@@ -162,7 +162,8 @@ def stream(video_filename):
         def generate():
             frame_index = 0
 
-            for frame_encoded in process_video(input_filepath, output_filepath, cancel_signal=lambda: cancel_processing):
+            for frame_encoded in process_video(input_filepath, output_filepath,
+                                               cancel_signal=lambda: cancel_processing):
                 # Convert back to a NumPy array for saving
                 # Use cv2.imdecode to convert the base64 encoded string back to an image
                 nparr = np.frombuffer(base64.b64decode(frame_encoded), np.uint8)

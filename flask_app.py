@@ -49,7 +49,7 @@ def main():
     try:
         if request.method == 'POST':
             if 'file' not in request.files:
-                raise FileNotFoundError
+                return redirect(url_for('show_error', e="No file provided"))
             user_file = request.files['file']
             if user_file:
                 #  make a safe file name
@@ -63,38 +63,7 @@ def main():
 
                 return redirect(url_for('processing', video_filename=os.path.basename(input_filepath),
                                         output_filename=os.path.basename(output_filepath)))
-        return '''<html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Pose Estimator</title>
-        </head>
-        <body>
-            <form method = "post" enctype="multipart/form-data">
-                <input type="file" accept=".mp4,.avi,.mov,.mkv" name="file">
-                <input type = "submit" value="Estimate">
-            </form>
-            
-            <script>
-                function validateFile() {
-                    const fileInput = document.getElementById('file-input');
-                    const errorMessage = document.getElementById('error-message');
-                    const allowedExtensions = ['mp4', 'avi', 'mov', 'mkv'];
-                    
-                    if (fileInput.files.length > 0) {
-                        const fileName = fileInput.files[0].name;
-                        const fileExtension = fileName.split('.').pop().toLowerCase();
-        
-                        if (!allowedExtensions.includes(fileExtension)) {
-                            errorMessage.style.display = 'block';
-                            return false;  // Prevent form submission
-                        }
-                    }
-                    errorMessage.style.display = 'none';
-                    return true;  // Allow form submission
-                }
-    </script>
-        </body>
-        </html>'''
+        return render_template('home.html')
     except FileNotFoundError as e:
         return url_for('show_error', e=e)
 

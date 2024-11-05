@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pose Estimator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #5a6e72;
+            font-family: Arial, sans-serif;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #5a6e72;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .left-panel, .right-panel {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .left-panel {
+            text-align: left;
+        }
+
+        .left-panel h1 {
+            font-size: 24px;
+        }
+
+        .left-panel h2 {
+            font-size: 18px;
+            margin-top: 15px;
+        }
+
+        .left-panel p {
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .right-panel {
+            background-color: #c3c3c3;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-area {
+            border: 2px dashed #333;
+            border-radius: 10px;
+            padding: 40px;
+            background-color: #e1e1e1;
+            color: #333;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area.dragover {
+            background-color: #d0ffd0;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #a4d6a3;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #333;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 600px) {
+            .container {
+                flex-direction: row;
+                gap: 20px;
+            }
+
+            .left-panel, .right-panel {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="left-panel">
+        <h1>AI Pose Estimator</h1>
+        <p>Developed by: Colin Prim, Kylie Saylor, & Justin Smith</p>
+
+        <h2>HOW IT WORKS:</h2>
+        <p>1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p>2. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+
+        <h2>TIPS:</h2>
+        <p>&#8226; Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <p>&#8226; Ut enim ad minim veniam, quis nostrud exercitation</p>
+    </div>
+
+    <div class="right-panel">
+        <form method="post" enctype="multipart/form-data" onsubmit="return validateFile()">
+            <div id="upload-area" class="upload-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                <p>Drag & drop a file here</p>
+                <p>or</p>
+                <input type="file" name="file" id="fileInput" accept=".mp4,.avi,.mov,.mkv" style="display: none;" onchange="displayFileName()">
+                <button type="button" onclick="fileInput.click()">Choose a file</button>
+            </div>
+            <div class="file-name" id="file-name">No file chosen</div>
+            <div class="button-container">
+                <button type="submit">Continue</button>
+            </div>
+        </form>
+        <p id="error-message" style="color: red; display: none;">Invalid file type. Only .mp4, .avi, .mov, and .mkv files are allowed.</p>
+    </div>
+</div>
+
+<script>
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('file-name');
+    const errorMessage = document.getElementById('error-message');
+
+    function handleDragOver(event) {
+        event.preventDefault();
+        uploadArea.classList.add('dragover');
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            displayFileName(); // Display the file name when dropped
+        }
+    }
+
+    function displayFileName() {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+        } else {
+            fileNameDisplay.textContent = "No file chosen";
+        }
+    }
+
+    function validateFile() {
+        const allowedExtensions = ['mp4', 'avi', 'mov', 'mkv'];
+        if (fileInput.files.length > 0) {
+            const fileName = fileInput.files[0].name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+                errorMessage.style.display = 'block';
+                return false;
+            }
+        }
+        errorMessage.style.display = 'none';
+        return true;
+    }
+</script>
+
+</body>
+</html>

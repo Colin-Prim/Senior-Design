@@ -49,7 +49,7 @@ def main():
     try:
         if request.method == 'POST':
             if 'file' not in request.files:
-                raise FileNotFoundError
+                return redirect(url_for('show_error', e="No file provided"))
             user_file = request.files['file']
             if user_file:
                 #  make a safe file name
@@ -63,38 +63,7 @@ def main():
 
                 return redirect(url_for('processing', video_filename=os.path.basename(input_filepath),
                                         output_filename=os.path.basename(output_filepath)))
-        return '''<html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Pose Estimator</title>
-        </head>
-        <body>
-            <form method = "post" enctype="multipart/form-data">
-                <input type="file" accept=".mp4,.avi,.mov,.mkv" name="file">
-                <input type = "submit" value="Estimate">
-            </form>
-            
-            <script>
-                function validateFile() {
-                    const fileInput = document.getElementById('file-input');
-                    const errorMessage = document.getElementById('error-message');
-                    const allowedExtensions = ['mp4', 'avi', 'mov', 'mkv'];
-                    
-                    if (fileInput.files.length > 0) {
-                        const fileName = fileInput.files[0].name;
-                        const fileExtension = fileName.split('.').pop().toLowerCase();
-        
-                        if (!allowedExtensions.includes(fileExtension)) {
-                            errorMessage.style.display = 'block';
-                            return false;  // Prevent form submission
-                        }
-                    }
-                    errorMessage.style.display = 'none';
-                    return true;  // Allow form submission
-                }
-    </script>
-        </body>
-        </html>'''
+        return render_template('home.html')
     except FileNotFoundError as e:
         return url_for('show_error', e=e)
 
@@ -106,36 +75,7 @@ def processing(video_filename, output_filename):
     global cancel_processing
     cancel_processing = False
 
-    return render_template_string(''' 
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Processing Video</title>
-        <script type="text/javascript">
-            var eventSource = new EventSource("{{ url_for('stream', video_filename=video_filename) }}");
-            eventSource.onmessage = function(event) {
-                if (event.data === 'DONE') {
-                    eventSource.close();
-                    // Redirect to download page when processing is done
-                    window.location.href = "{{ url_for('view_frames', video_filename=video_filename, output_filename=output_filename) }}";                
-                } 
-                else {
-                    // Set the source of the image to the URL provided by the server
-                    document.getElementById('video_frame').src = event.data;
-                }
-            };
-        </script>
-    </head>
-    <body>
-        <h1>Processing your video...</h1>
-        <img id="video_frame" src="" alt="Video frame will appear here">
-        <br><br>
-        <form action="{{ url_for('cancel_processing_route', video_filename=video_filename) }}" method="post">
-            <button type="submit">Cancel</button>
-        </form>
-    </body>
-    </html>
-    ''', video_filename=video_filename, output_filename=output_filename)
+    return render_template('processing.html', video_filename=video_filename, output_filename=output_filename)
 
 
 # Route to handle the cancellation of processing
@@ -191,40 +131,14 @@ def stream(video_filename):
 @app.route('/view_frames/<video_filename>/<output_filename>', methods=['GET'])
 def view_frames(video_filename, output_filename):
     try:
-        # Get all saved frames in the FRAME_FOLDER
-        frame_files = sorted(os.listdir(app.config['FRAME_FOLDER']))
+        # Sort frame files numerically by extracting the frame number from each filename
+        frame_files = sorted(
+            os.listdir(app.config['FRAME_FOLDER']),
+            key=lambda x: int(''.join(filter(str.isdigit, x)))
+        )
 
-        return render_template_string('''
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>View Estimated Frames</title>
-            <script type="text/javascript">
-                var currentIndex = 0;
-                var frames = {{ frames|tojson }};
-                function showNextFrame() {
-                    document.getElementById('frame_image').src = "/frames/" + frames[currentIndex];
-                    currentIndex = (currentIndex + 1) % frames.length;
-                }
-                setInterval(showNextFrame, 500);  // Change frame every 500ms
-            </script>
-        </head>
-        <body onload="showNextFrame()">
-            <h1>Process Complete</h1>
-            <img id="frame_image" src="" alt="Estimated Frame">
-            <br><br>
-            <form action="{{ url_for('download_file', filename=output_filename) }}" method="get">
-            <button type="submit">Download File</button>
-            </form>
-            <form action="{{ url_for('restart_processing', video_filename=video_filename) }}" method="post">
-                <button type="submit">Restart Estimation</button>
-            </form>
-            <form action="{{ url_for('cleaning') }}" method="post">
-                <button type="submit">Back to Home</button>
-            </form>
-        </body>
-        </html>
-        ''', frames=frame_files, video_filename=video_filename, output_filename=output_filename)
+        return render_template('view_and_download.html',
+                               frames=frame_files, video_filename=video_filename, output_filename=output_filename)
     except Exception as e:
         return url_for('show_error', e=e)
 
@@ -252,32 +166,6 @@ def restart_processing(video_filename):
         return url_for('show_error', e=e)
 
 
-"""
-@app.route('/download/<video_filename>/<output_filename>', methods=['GET'])
-def download_page(video_filename, output_filename):
-    return render_template_string('''<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download File</title>
-</head>
-<body>
-    <h1>Your file is ready!</h1>
-    <p>Click the button below to download your file.</p>
-    <form action="{{ url_for('download_file', filename=filename) }}" method="get">
-        <button type="submit">Download File</button>
-    </form>
-    <form action="{{ url_for('restart_processing', video_filename=video_filename) }}" method="post">
-        <button type="submit">Restart Estimation</button>
-    </form>
-    <form action="{{ url_for('cleaning') }}" method="post">
-        <button type="submit">Back to Home</button>
-    </form> 
-</body>
-</html>''', filename=output_filename, video_filename=video_filename)
-"""
-
-
 # Route to download the generated .bvh file
 @app.route('/download_file/<filename>', methods=['GET'])
 def download_file(filename):
@@ -300,42 +188,7 @@ def cleaning():
 @app.route('/error', methods=['POST'])
 def show_error(e=None):
     error_message = str(e) if e else "An unknown error occurred. Please try again."
-    return render_template_string('''<html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Error</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f8d7da;
-                        color: #721c24;
-                        text-align: center;
-                        padding: 50px;
-                    }
-                    .error-container {
-                        background-color: #f5c6cb;
-                        padding: 20px;
-                        border-radius: 5px;
-                        display: inline-block;
-                    }
-                    h1 {
-                        font-size: 24px;
-                        margin: 0;
-                    }
-                    p {
-                        font-size: 18px;
-                        margin: 10px 0 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="error-container">
-                    <h1>Error</h1>
-                    <p>{{ error_message }}</p>
-                </div>
-            </body>
-            </html>''', error_message=error_message)
+    return render_template('error_screen.html', error_message=error_message)
 
 
 if __name__ == '__main__':

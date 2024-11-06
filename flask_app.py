@@ -131,8 +131,11 @@ def stream(video_filename):
 @app.route('/view_frames/<video_filename>/<output_filename>', methods=['GET'])
 def view_frames(video_filename, output_filename):
     try:
-        # Get all saved frames in the FRAME_FOLDER
-        frame_files = sorted(os.listdir(app.config['FRAME_FOLDER']))
+        # Sort frame files numerically by extracting the frame number from each filename
+        frame_files = sorted(
+            os.listdir(app.config['FRAME_FOLDER']),
+            key=lambda x: int(''.join(filter(str.isdigit, x)))
+        )
 
         return render_template_string('''
         <html lang="en">
@@ -190,32 +193,6 @@ def restart_processing(video_filename):
         return redirect(url_for('processing', video_filename=video_filename, output_filename=output_filename))
     except Exception as e:
         return url_for('show_error', e=e)
-
-
-"""
-@app.route('/download/<video_filename>/<output_filename>', methods=['GET'])
-def download_page(video_filename, output_filename):
-    return render_template_string('''<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download File</title>
-</head>
-<body>
-    <h1>Your file is ready!</h1>
-    <p>Click the button below to download your file.</p>
-    <form action="{{ url_for('download_file', filename=filename) }}" method="get">
-        <button type="submit">Download File</button>
-    </form>
-    <form action="{{ url_for('restart_processing', video_filename=video_filename) }}" method="post">
-        <button type="submit">Restart Estimation</button>
-    </form>
-    <form action="{{ url_for('cleaning') }}" method="post">
-        <button type="submit">Back to Home</button>
-    </form> 
-</body>
-</html>''', filename=output_filename, video_filename=video_filename)
-"""
 
 
 # Route to download the generated .bvh file

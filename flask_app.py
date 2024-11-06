@@ -188,42 +188,7 @@ def cleaning():
 @app.route('/error', methods=['POST'])
 def show_error(e=None):
     error_message = str(e) if e else "An unknown error occurred. Please try again."
-    return render_template_string('''<html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Error</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f8d7da;
-                        color: #721c24;
-                        text-align: center;
-                        padding: 50px;
-                    }
-                    .error-container {
-                        background-color: #f5c6cb;
-                        padding: 20px;
-                        border-radius: 5px;
-                        display: inline-block;
-                    }
-                    h1 {
-                        font-size: 24px;
-                        margin: 0;
-                    }
-                    p {
-                        font-size: 18px;
-                        margin: 10px 0 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="error-container">
-                    <h1>Error</h1>
-                    <p>{{ error_message }}</p>
-                </div>
-            </body>
-            </html>''', error_message=error_message)
+    return render_template('error_screen.html', error_message=error_message)
 
 
 if __name__ == '__main__':

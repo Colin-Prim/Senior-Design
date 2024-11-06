@@ -181,6 +181,13 @@
                 return false;
             }
         }
+
+        if (fileInput.files.length === 0) {
+            errorMessage.textContent = 'Please select a file to upload.';
+            errorMessage.style.display = 'block';
+            return false;
+        }
+
         errorMessage.style.display = 'none';
         return true;
     }

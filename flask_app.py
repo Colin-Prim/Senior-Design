@@ -137,37 +137,8 @@ def view_frames(video_filename, output_filename):
             key=lambda x: int(''.join(filter(str.isdigit, x)))
         )
 
-        return render_template_string('''
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>View Estimated Frames</title>
-            <script type="text/javascript">
-                var currentIndex = 0;
-                var frames = {{ frames|tojson }};
-                function showNextFrame() {
-                    document.getElementById('frame_image').src = "/frames/" + frames[currentIndex];
-                    currentIndex = (currentIndex + 1) % frames.length;
-                }
-                setInterval(showNextFrame, 500);  // Change frame every 500ms
-            </script>
-        </head>
-        <body onload="showNextFrame()">
-            <h1>Process Complete</h1>
-            <img id="frame_image" src="" alt="Estimated Frame">
-            <br><br>
-            <form action="{{ url_for('download_file', filename=output_filename) }}" method="get">
-            <button type="submit">Download File</button>
-            </form>
-            <form action="{{ url_for('restart_processing', video_filename=video_filename) }}" method="post">
-                <button type="submit">Restart Estimation</button>
-            </form>
-            <form action="{{ url_for('cleaning') }}" method="post">
-                <button type="submit">Back to Home</button>
-            </form>
-        </body>
-        </html>
-        ''', frames=frame_files, video_filename=video_filename, output_filename=output_filename)
+        return render_template('view_and_download.html',
+                               frames=frame_files, video_filename=video_filename, output_filename=output_filename)
     except Exception as e:
         return url_for('show_error', e=e)
 

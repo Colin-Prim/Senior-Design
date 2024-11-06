@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Estimated Frames</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #556C76;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .frame-display {
+            background-color: #ccc;
+            width: 70%;
+            max-height: 80vh;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #333;
+            position: relative;
+        }
+
+        #frame_image {
+            max-height: 80vh;
+            width: auto;
+            height: auto;
+        }
+
+        .status-text {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .buttons-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-button {
+            background-color: #eee;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .action-button:hover {
+            background-color: #ddd;
+        }
+    </style>
+    <script type="text/javascript">
+        var currentIndex = 0;
+        var frames = {{ frames|tojson }};
+        var frameCount = frames.length;
+
+        function showNextFrame() {
+            document.getElementById('frame_image').src = "/frames/" + frames[currentIndex];
+            document.getElementById('status_text').innerText = "Displaying frame " + (currentIndex + 1) + " of " + frameCount;
+            currentIndex = (currentIndex + 1) % frames.length;
+        }
+
+        function playFrames() {
+            setInterval(showNextFrame, 500);  // Change frame every 500ms
+        }
+    </script>
+</head>
+<body onload="playFrames()">
+    <div class="frame-display">
+        <img id="frame_image" src="" alt="Estimated Frame">
+        <div class="status-text" id="status_text">Displaying frame x of xx</div>
+    </div>
+
+    <div class="buttons-container">
+        <form action="{{ url_for('download_file', filename=output_filename) }}" method="get">
+            <button type="submit" class="action-button">Download</button>
+        </form>
+        <form action="{{ url_for('restart_processing', video_filename=video_filename) }}" method="post">
+            <button type="submit" class="action-button">Try Again</button>
+        </form>
+        <form action="{{ url_for('cleaning') }}" method="post">
+            <button type="submit" class="action-button">Back to Home</button>
+        </form>
+    </div>
+</body>
+</html>

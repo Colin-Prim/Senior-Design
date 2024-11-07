@@ -32,6 +32,10 @@ def clean_up():
         except FileNotFoundError as e:
             print(f'Error deleting file {file_path}: {e}')
 
+    clean_frames()
+
+
+def clean_frames():
     for filename in os.listdir(app.config['FRAME_FOLDER']):
         file_path = os.path.join(app.config['FRAME_FOLDER'], filename)
         try:
@@ -156,6 +160,9 @@ def serve_frame(filename):
 @app.route('/restart/<video_filename>', methods=['POST'])
 def restart_processing(video_filename):
     try:
+        #  delete all existing frame data to make room for new estimations
+        clean_frames()
+
         # Re-generate the output file name
         output_filename = f"{os.path.splitext(video_filename)[0]}_estimated_pose.bvh"
         # output_filepath = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)

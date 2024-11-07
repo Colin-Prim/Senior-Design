@@ -85,6 +85,7 @@ Frames: {frame_count}
 Frame Time: {frame_time}
 """
 
+
 def extract_pose_data(pose_landmarks):
     landmarks = {'Hips': 0, 'LeftUpLeg': 23, 'LeftLeg': 25, 'LeftFoot': 27, 'RightUpLeg': 24, 'RightLeg': 26,
                  'RightFoot': 28, 'Spine': 11, 'Spine1': 12, 'Spine2': 13, 'Neck': 0, 'Head': 0}
@@ -189,6 +190,8 @@ def process_video(user_file, output_file_path, cancel_signal=False):
                 yield frame_encoded
 
             if cancel_signal is True:
+                #  write any buffered data to the file before closing it
+                bvh_file.flush()
                 break
 
     cap.release()

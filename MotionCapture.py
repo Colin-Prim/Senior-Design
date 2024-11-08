@@ -5,7 +5,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from video_handler.video_reader import VideoReader
 from estimator_2d.mediapipe_estimator import MediapipeEstimator
-from estimator_3d.advanced_lifter import AdvancedLifter
+from models.advanced_lifter import AdvancedLifter
 from bvh_writer.bvh_writer import BVHWriter
 from bvh_writer.bvh_skeleton import BVHSkeleton
 

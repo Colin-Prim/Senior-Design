@@ -177,10 +177,6 @@ def restart_processing(video_filename):
 @app.route('/download_file/<filename>', methods=['GET'])
 def download_file(filename):
     try:
-        # # Ensure the canceled .bvh file is created
-        # if filename == 'canceled.bvh':
-        #     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'w') as f:
-        #         f.write("Processing was canceled.")
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     except FileNotFoundError as e:
         return url_for('show_error', e=e)

@@ -83,12 +83,12 @@ def processing(video_filename, output_filename):
 
 
 # Route to handle the cancellation of processing
-@app.route('/cancel_processing/<video_filename>', methods=['POST'])
-def cancel_processing_route(video_filename):
+@app.route('/cancel_processing/<video_filename>/<output_filename>', methods=['POST'])
+def cancel_processing_route(video_filename, output_filename):
     global cancel_processing
     try:
         cancel_processing = True  # Set the cancel flag to True
-        return redirect(url_for('view_frames', video_filename=video_filename, output_filename='canceled.bvh'))
+        return redirect(url_for('view_frames', video_filename=video_filename, output_filename=output_filename))
     except Exception as e:
         return url_for('show_error', e=e)
 
@@ -177,10 +177,10 @@ def restart_processing(video_filename):
 @app.route('/download_file/<filename>', methods=['GET'])
 def download_file(filename):
     try:
-        # Ensure the canceled .bvh file is created
-        if filename == 'canceled.bvh':
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'w') as f:
-                f.write("Processing was canceled.")
+        # # Ensure the canceled .bvh file is created
+        # if filename == 'canceled.bvh':
+        #     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'w') as f:
+        #         f.write("Processing was canceled.")
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
     except FileNotFoundError as e:
         return url_for('show_error', e=e)

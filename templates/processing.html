@@ -68,7 +68,7 @@
         <img id="video_frame" src="" alt="Video frame will appear here">
     </div>
 
-    <form action="{{ url_for('cancel_processing_route', video_filename=video_filename) }}" method="post">
+    <form action="{{ url_for('cancel_processing_route', video_filename=video_filename, output_filename=output_filename) }}" method="post">
         <button type="submit" class="cancel-button">Cancel</button>
     </form>
 </body>

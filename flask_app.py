@@ -19,7 +19,8 @@ app.config['FRAME_FOLDER'] = FRAME_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(FRAME_FOLDER, exist_ok=True)
 
-cancel_processing = False
+cancel_processing = {'value': False}
+
 
 
 def clean_up():
@@ -77,7 +78,7 @@ def main():
 def processing(video_filename, output_filename):
     # reset cancel_processing flag in event of previous cancellation
     global cancel_processing
-    cancel_processing = False
+    cancel_processing['value'] = False
 
     return render_template('processing.html', video_filename=video_filename, output_filename=output_filename)
 
@@ -87,7 +88,8 @@ def processing(video_filename, output_filename):
 def cancel_processing_route(video_filename, output_filename):
     global cancel_processing
     try:
-        cancel_processing = True  # Set the cancel flag to True
+        cancel_processing['value'] = True  # Set the cancel flag to True
+
         return redirect(url_for('view_frames', video_filename=video_filename, output_filename=output_filename))
     except Exception as e:
         return url_for('show_error', e=e)
@@ -97,6 +99,7 @@ def cancel_processing_route(video_filename, output_filename):
 @app.route('/stream/<video_filename>')
 def stream(video_filename):
     try:
+        global cancel_processing
         input_filepath = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
 
         # Ensure the output file is also created in UPLOAD_FOLDER
@@ -107,7 +110,7 @@ def stream(video_filename):
             frame_index = 0
 
             for frame_encoded in process_video(input_filepath, output_filepath,
-                                               cancel_signal=lambda: cancel_processing):
+                                               cancel_signal=cancel_processing):
                 # Convert back to a NumPy array for saving
                 # Use cv2.imdecode to convert the base64 encoded string back to an image
                 nparr = np.frombuffer(base64.b64decode(frame_encoded), np.uint8)

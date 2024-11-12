@@ -1,168 +1,45 @@
 import cv2
-import mediapipe as mp
 import numpy as np
-from scipy.spatial.transform import Rotation as R
-import os
+import mediapipe as mp
+from bvh_writer.bvh_writer import BVHWriter
+from bvh_writer.bvh_skeleton import BVHSkeleton
 import base64
 
 
-# Define the BVH header
-bvh_header = """HIERARCHY
-ROOT Hips
-{{
-    OFFSET 0.000000 0.000000 0.000000
-    CHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation
-    JOINT Spine
-    {{
-        OFFSET 0.000000 10.000000 0.000000
-        CHANNELS 3 Zrotation Xrotation Yrotation
-        JOINT Spine1
-        {{
-            OFFSET 0.000000 10.000000 0.000000
-            CHANNELS 3 Zrotation Xrotation Yrotation
-            JOINT Spine2
-            {{
-                OFFSET 0.000000 10.000000 0.000000
-                CHANNELS 3 Zrotation Xrotation Yrotation
-                JOINT Neck
-                {{
-                    OFFSET 0.000000 10.000000 0.000000
-                    CHANNELS 3 Zrotation Xrotation Yrotation
-                    JOINT Head
-                    {{
-                        OFFSET 0.000000 10.000000 0.000000
-                        CHANNELS 3 Zrotation Xrotation Yrotation
-                        End Site
-                        {{
-                            OFFSET 0.000000 5.000000 0.000000
-                        }}
-                    }}
-                }}
-            }}
-        }}
-    }}
-    JOINT LeftUpLeg
-    {{
-        OFFSET 5.000000 0.000000 0.000000
-        CHANNELS 3 Zrotation Xrotation Yrotation
-        JOINT LeftLeg
-        {{
-            OFFSET 0.000000 -10.000000 0.000000
-            CHANNELS 3 Zrotation Xrotation Yrotation
-            JOINT LeftFoot
-            {{
-                OFFSET 0.000000 -10.000000 0.000000
-                CHANNELS 3 Zrotation Xrotation Yrotation
-                End Site
-                {{
-                    OFFSET 0.000000 -5.000000 0.000000
-                }}
-            }}
-        }}
-    }}
-    JOINT RightUpLeg
-    {{
-        OFFSET -5.000000 0.000000 0.000000
-        CHANNELS 3 Zrotation Xrotation Yrotation
-        JOINT RightLeg
-        {{
-            OFFSET 0.000000 -10.000000 0.000000
-            CHANNELS 3 Zrotation Xrotation Yrotation
-            JOINT RightFoot
-            {{
-                OFFSET 0.000000 -10.000000 0.000000
-                CHANNELS 3 Zrotation Xrotation Yrotation
-                End Site
-                {{
-                    OFFSET 0.000000 -5.000000 0.000000
-                }}
-            }}
-        }}
-    }}
-}}
-MOTION
-Frames: {frame_count}
-Frame Time: {frame_time}
-"""
-
-
-def extract_pose_data(pose_landmarks):
-    landmarks = {'Hips': 0, 'LeftUpLeg': 23, 'LeftLeg': 25, 'LeftFoot': 27, 'RightUpLeg': 24, 'RightLeg': 26,
-                 'RightFoot': 28, 'Spine': 11, 'Spine1': 12, 'Spine2': 13, 'Neck': 0, 'Head': 0}
-
-    parent_child_pairs = {
-        'Hips': None,
-        'Spine': 'Hips',
-        'Spine1': 'Spine',
-        'Spine2': 'Spine1',
-        'Neck': 'Spine2',
-        'Head': 'Neck',
-        'LeftUpLeg': 'Hips',
-        'LeftLeg': 'LeftUpLeg',
-        'LeftFoot': 'LeftLeg',
-        'RightUpLeg': 'Hips',
-        'RightLeg': 'RightUpLeg',
-        'RightFoot': 'RightLeg'
-    }
-
-    def vector_to_quaternion(v1, v2):
-        cross_product = np.cross(v1, v2)
-        dot_product = np.dot(v1, v2)
-        w = np.sqrt((np.linalg.norm(v1) ** 2) * (np.linalg.norm(v2) ** 2)) + dot_product
-        q = np.array([w, cross_product[0], cross_product[1], cross_product[2]])
-        q = q / np.linalg.norm(q)
-        return q
-
-    def quaternion_to_euler(q):
-        r = R.from_quat([q[1], q[2], q[3], q[0]])
-        euler = r.as_euler('xyz', degrees=True)
-        return euler
-
-    def calculate_rotation(parent, child):
-        parent_landmark = pose_landmarks.landmark[parent]
-        child_landmark = pose_landmarks.landmark[child]
-        parent_vector = np.array([parent_landmark.x, parent_landmark.y, parent_landmark.z])
-        child_vector = np.array([child_landmark.x, child_landmark.y, child_landmark.z])
-        q = vector_to_quaternion(parent_vector, child_vector)
-        euler = quaternion_to_euler(q)
-        return euler
-
-    pose_data = []
-    for joint, index in landmarks.items():
-        landmark = pose_landmarks.landmark[index]
-        x, y, z = landmark.x, landmark.y, landmark.z
-        rotation_x, rotation_y, rotation_z = 0, 0, 0
-        if parent_child_pairs[joint]:
-            parent_joint = parent_child_pairs[joint]
-            parent_index = landmarks[parent_joint]
-            euler = calculate_rotation(parent_index, index)
-            rotation_x, rotation_y, rotation_z = euler
-        pose_data.append(f"{x:.6f} {y:.6f} {z:.6f} {rotation_x:.6f} {rotation_y:.6f} {rotation_z:.6f}")
-
-    return " ".join(pose_data) + "\n"
-
-
-def process_video(user_file, output_file_path, cancel_signal=False):
+def process_video(user_file, output_file_path, cancel_signal):
+    # Open the video file
     cap = cv2.VideoCapture(user_file)
     if not cap.isOpened():
         print("Error reading video file")
         return
 
+    # Get video properties
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     frame_time = 1 / fps
     current_frame = 0
 
-    mpDraw = mp.solutions.drawing_utils
-    mpPose = mp.solutions.pose
-    pose = mpPose.Pose()
-
     print(f"Frame count: {frame_count}, Frame time: {frame_time}")
 
+    # Initialize MediaPipe Pose and Drawing utils
+    mpDraw = mp.solutions.drawing_utils
+    mp_pose = mp.solutions.pose
+    pose = mp_pose.Pose(static_image_mode=False, model_complexity=1, enable_segmentation=False,
+                        min_detection_confidence=0.5)
+
+    # Initialize BVH skeleton and writer
+    bvh_skeleton = BVHSkeleton().get_default_skeleton()
+    bvh_writer = BVHWriter(bvh_skeleton)
+    initial_root_position = None
+
+    # Open output BVH file for writing
     with open(output_file_path, 'w') as bvh_file:
-        bvh_header_formatted = bvh_header.format(frame_count=frame_count, frame_time=frame_time)
-        print(f"Formatted BVH header:\n{bvh_header_formatted}")
-        bvh_file.write(bvh_header_formatted)
+        # Write the BVH hierarchy and motion header
+        bvh_file.write("HIERARCHY\n")
+        bvh_writer._write_joint_hierarchy(bvh_file, "ROOT", "Hips", bvh_skeleton["Hips"])
+        bvh_file.write("\nMOTION\n")
+        bvh_file.write(f"Frames: {frame_count}\n")
+        bvh_file.write(f"Frame Time: {frame_time}\n")
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -170,53 +47,72 @@ def process_video(user_file, output_file_path, cancel_signal=False):
                 break
 
             current_frame += 1
+
+            # Convert frame to RGB for processing
             imgRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(imgRGB)
 
-            result2 = pose.process(imgRGB)
+            # Check if 3D keypoints are available
+            if results.pose_landmarks:
+                # Extract 3D landmarks and convert to numpy array
+                landmarks = results.pose_landmarks.landmark
+                keypoints_3d = np.array([(lm.x, lm.y, lm.z) for lm in landmarks]) * 100  # Scale to fit BVH
 
-            if result2.pose_landmarks:
-                frame_data = extract_pose_data(result2.pose_landmarks)
-                bvh_file.write(frame_data)
-                print(f"Frame {current_frame} data: {frame_data.strip()}")
+                # Prepare motion data for BVH export
+                frame_motion = []
+                root_position = keypoints_3d[mp_pose.PoseLandmark.LEFT_HIP.value]
+
+                # Set initial root position
+                if initial_root_position is None:
+                    initial_root_position = root_position.copy()
+                    print(f"Initial Root Position: {initial_root_position}")
+
+                # Adjust root position relative to initial position
+                root_x, root_y, root_z = root_position - initial_root_position
+                frame_motion.extend([root_x, root_y, root_z])  # Xposition, Yposition, Zposition
+                frame_motion.extend([0.0, 0.0, 0.0])  # Initial rotation for the root joint
+
+                # Loop through each joint and add 3D positions
+                for joint_idx in range(1, 33):  # Assuming 33 keypoints from MediaPipe
+                    joint_position = keypoints_3d[joint_idx]
+                    frame_motion.extend(joint_position.tolist())
+
+                # Write the frame motion data directly to the BVH file
+                bvh_file.write(" ".join(map(str, frame_motion)) + "\n")
+                print(f"Processed frame {current_frame} with root position {root_x}, {root_y}, {root_z}")
 
                 # Draw the pose annotation on the frame
-                mpDraw.draw_landmarks(frame, result2.pose_landmarks, mpPose.POSE_CONNECTIONS)
+                mpDraw.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
                 # Convert frame to JPEG format
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame_encoded = base64.b64encode(buffer).decode('utf-8')
 
-                # Yield the frame as base64
+                # Yield the frame as a base64-encoded string
                 yield frame_encoded
 
-            if cancel_signal is True:
-                #  write any buffered data to the file before closing it
+            # If cancellation signal is received, stop processing
+            if cancel_signal['value']:
                 bvh_file.flush()
                 break
 
+    # Release resources
     cap.release()
+    pose.close()
     cv2.destroyAllWindows()
+    print(f"BVH file successfully written to {output_file_path}.")
 
 
 if __name__ == "__main__":
-    from tkinter import Tk, filedialog
+    # Initial setup (loading video, setting up skeleton, etc.)
+    video_path = input("Enter the path of the video file (e.g., TaiChi.mp4): ")
 
+    # Create the generator
+    frame_generator = process_video(video_path, "output.bvh", {'value': False})
 
-    def choose_file():
-        root = Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename(title="Select a video file",
-                                               filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv"),
-                                                          ("All files", "*.*")])
-        root.destroy()
-        return file_path
+    # Iterate over the generator to process and display frames
+    for frame_encoded in frame_generator:
+        # Optionally display the frame using OpenCV (for testing purposes)
+        frame = cv2.imdecode(np.frombuffer(base64.b64decode(frame_encoded), np.uint8), cv2.IMREAD_COLOR)
 
-
-    def main():
-        file_path = choose_file()
-        if file_path:
-            output_file_path = "output.bvh"
-            process_video(file_path, output_file_path)
-
-
-    main()
+    cv2.destroyAllWindows()

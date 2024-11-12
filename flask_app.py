@@ -22,6 +22,7 @@ os.makedirs(FRAME_FOLDER, exist_ok=True)
 cancel_processing = {'value': False}
 
 
+
 def clean_up():
     """Delete all files in the directory"""
     for filename in os.listdir(app.config['UPLOAD_FOLDER']):
@@ -88,6 +89,7 @@ def cancel_processing_route(video_filename, output_filename):
     global cancel_processing
     try:
         cancel_processing['value'] = True  # Set the cancel flag to True
+
         return redirect(url_for('view_frames', video_filename=video_filename, output_filename=output_filename))
     except Exception as e:
         return url_for('show_error', e=e)

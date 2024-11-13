@@ -20,17 +20,17 @@
             font-family: Arial, sans-serif;
             color: white;
             padding: 20px;
-            margin: 0;
+            margin: 0 auto;
         }
 
         .container {
             display: flex;
+            justify-content: flex-start
             flex-direction: column;
             align-items: center;
             background-color: #5a6e72;
             padding: 20px;
-            width: 100%;
-            max-width: 800px;
+            width: 85%;
         }
 
         .left-panel, .right-panel {
@@ -39,6 +39,7 @@
         }
 
         .left-panel {
+            flex: 5;
             text-align: left;
         }
 
@@ -57,6 +58,7 @@
         }
 
         .right-panel {
+            flex: 3;
             background-color: #c3c3c3;
             border-radius: 10px;
             padding: 20px;
@@ -117,12 +119,24 @@
         <p>Developed by: Colin Prim, Kylie Saylor, & Justin Smith</p>
 
         <h2>HOW IT WORKS:</h2>
-        <p>1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        <p>2. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <p>The AI Pose Estimation program allows users to upload a video file that will be put through a pose
+            estimation software. Once the processing is complete, the user will be able to download a .bvh file of the
+            pose estimation. </p>
+        <p>1. Upload a video file to the right. The accepted files are .mp4, .ami, .mkv, & .mov.</p>
+        <p>2. Click the "Estimate" button. Your video will begin processing immediately.</p>
+        <p>3. You can cancel estimation any time. If you cancel, you will be able to download the unfinished .bvh file</p>
+        <p>4. After processing completes, you may download the .bvh file ("Download"),
+            restart estimation with the same file ("Try Again"),
+            or go back to the home page to process a different file ("Back to Home").</p>
+        <p>5. All input, output, and processing files are deleted when you leave the site.</p>
 
         <h2>TIPS:</h2>
-        <p>&#8226; Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        <p>&#8226; Ut enim ad minim veniam, quis nostrud exercitation</p>
+        <p>&#8226; For the best results, ensure the model starts in a neutral "t-pose" (with arms held out to the
+            sides, parallel to the floor).</p>
+        <p>&#8226; Ensure that the models limbs do not leave the frame. Additionally, keep limb crossing to a
+            minimum.</p>
+        <p>&#8226; Film the video with a monochrome background, and have the model wear clothing that is a different
+            color to the background.</p>
     </div>
 
     <div class="right-panel">
@@ -135,7 +149,7 @@
             </div>
             <div class="file-name" id="file-name">No file chosen</div>
             <div class="button-container">
-                <button type="submit">Continue</button>
+                <button type="submit">Estimate</button>
             </div>
         </form>
         <p id="error-message" style="color: red; display: none;">Invalid file type. Only .mp4, .avi, .mov, and .mkv files are allowed.</p>

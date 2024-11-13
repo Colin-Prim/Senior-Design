@@ -13,26 +13,33 @@
             color: #fff;
             font-family: Arial, sans-serif;
             height: 100vh;
-            margin: 0;
+            margin: 0 auto;
         }
 
         .frame-display {
             background-color: #ccc;
-            width: 70%;
+            height: 70vh;
+            min-height: 60vh;
             max-height: 80vh;
+            min-width: 70vw;
+            max-width: 90vw;
             border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
             overflow: hidden;
             font-size: 24px;
             color: #333;
         }
 
         .frame-display img {
+            min-height: 60vh;
             max-height: 80vh;
             width: auto; /* Maintain aspect ratio */
             height: auto;
+            display: block;
+            margin: auto;
         }
 
         .cancel-button {

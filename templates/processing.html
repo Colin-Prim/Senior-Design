@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Processing Video</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #556C76;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0 auto;
+        }
+
+        .frame-display {
+            background-color: #ccc;
+            min-height: 60vh;
+            max-height: 80vh;
+            min-width: 70vw;
+            max-width: 90vw;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .frame-display img {
+            max-height: 80vh;
+            max-width: 90vw;
+            width: auto; /* Maintain aspect ratio */
+            height: auto;
+            display: block;
+            margin: auto;
+        }
+
+        .cancel-button {
+            margin-top: 20px;
+            background-color: #f06d6d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .cancel-button:hover {
+            background-color: #d65c5c;
+        }
+    </style>
+    <script type="text/javascript">
+        var eventSource = new EventSource("{{ url_for('stream', video_filename=video_filename) }}");
+        eventSource.onmessage = function(event) {
+            if (event.data === 'DONE') {
+                eventSource.close();
+                window.location.href = "{{ url_for('view_frames', video_filename=video_filename, output_filename=output_filename) }}";
+            } else {
+                // Update the displayed frame
+                document.getElementById('video_frame').src = event.data;
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="frame-display">
+        <img id="video_frame" src="" alt="Video frame will appear here">
+    </div>
+
+    <form action="{{ url_for('cancel_processing_route', video_filename=video_filename, output_filename=output_filename) }}" method="post">
+        <button type="submit" class="cancel-button">Cancel</button>
+    </form>
+</body>
+</html>

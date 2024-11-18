@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: my-flask-app
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:10000 flask_app:app
+    autoDeploy: true
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: "BFOWN293OF202NDJ781LDP84HNA3"
+    healthCheckPath: /
+    routes:
+      - type: web
+        src: /
+        dest: http://0.0.0.0:10000
